@@ -1,1 +1,85 @@
-<!-- Your HTML goes here -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Top 10 Reasons for 311 Calls</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .bar {
+      fill: steelblue; /* Bar color */
+    }
+    .bar:hover {
+      fill: #4682B4; /* Hover color */
+    }
+    .axis text {
+      font-size: 12px; /* Axis text size */
+    }
+  </style>
+</head>
+<body>
+  <h1>Boston 311 Calls in 2023</h1>
+  <h2>Report for Top 10 Calls</h2>
+  <div id="chart"></div>
+ 
+  <script>
+    // Use D3.js to fetch the CSV data
+    d3.csv("311_boston_data.csv").then(function(data) {
+      // Process the data and convert count to numbers
+      data.forEach(function(d) {
+        d.Count = +d.Count;
+      });
+
+      // Sort the data by count in descending order and take the top 10 reasons
+      const topReasons = data.sort((a, b) => b.Count - a.Count).slice(0, 10);
+
+      // Set up SVG dimensions and margins
+      const margin = { top: 20, right: 20, bottom: 70, left: 40 };
+      const width = 600 - margin.left - margin.right;
+      const height = 400 - margin.top - margin.bottom;
+
+      // Create the SVG canvas
+      const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Create x and y scales
+      const x = d3.scaleBand()
+        .range([0, width])
+        .domain(topReasons.map(d => d.Reason))
+        .padding(0.1);
+
+      const y = d3.scaleLinear()
+        .range([height, 0])
+        .domain([0, d3.max(topReasons, d => d.Count)]);
+
+      // Create x and y axis
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .style("font-size", "12px"); // Adjust text size
+
+      svg.append("g")
+        .call(d3.axisLeft(y))
+        .selectAll("text")
+        .style("font-size", "12px"); // Adjust text size
+
+      // Create bars
+      svg.selectAll(".bar")
+        .data(topReasons)
+        .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.Reason))
+        .attr("y", d => y(d.Count))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d.Count));
+    });
+  </script>
+  <p>Data source: The City of Boston</p> <!-- Citation information -->
+    <p><sup>[1]</sup> The City of Boston - Department of XYZ, Year of Data Collection, Emmanuel Sagoe</p> 
+</body>
+</html>
